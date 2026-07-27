@@ -1,0 +1,38 @@
+stages:
+  - lint
+  - security
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+cache:
+  paths:
+    - .pip-cache/
+
+lint:
+  stage: lint
+  image: python:3.11-slim
+  before_script:
+    - pip install ruff
+  script:
+    - ruff check . || true
+    - python -m py_compile app.py config.py db.py content.py utils.py auth_telegram.py
+  allow_failure: true
+
+secret_detection:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install detect-secrets
+  script:
+    - detect-secrets scan --all-files > /dev/null && echo "secret scan completed"
+  allow_failure: true
+
+dependency_scan:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install pip-audit
+  script:
+    - pip-audit -r requirements.txt || true
+  allow_failure: true

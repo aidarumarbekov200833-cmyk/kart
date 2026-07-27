@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}AutoFlow — Вход{% endblock %}
+{% block body_class %}min-h-screen flex flex-col items-center justify-center p-4{% endblock %}
+{% block head_extra %}
+<style>
+  .auth-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 20%, rgba(99,102,241,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(6,182,212,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .auth-card > * { position: relative; z-index: 1; }
+  .rule-item { transition: all 0.2s ease; }
+  .rule-item:hover { transform: translateX(4px); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="w-full max-w-5xl mx-auto flex flex-col lg:flex-row items-stretch gap-6 page-enter">
+
+  <!-- Auth Column -->
+  <div class="flex-1 auth-card glass-elevated p-8 md:p-10 flex flex-col justify-center text-center">
+    <div style="position:absolute;top:1rem;right:1rem;z-index:10;">
+      <button id="theme-toggle-btn" class="theme-toggle" data-tooltip="Сменить тему">🎨</button>
+      <div id="theme-dropdown" class="theme-dropdown glass-elevated p-1 hidden"></div>
+    </div>
+    <div class="mb-8">
+      <h1 class="logo-gradient" style="font-size:2rem;font-weight:800;letter-spacing:-0.03em;">AutoFlow Unified</h1>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Автоматизация лидогенерации в Telegram</p>
+    </div>
+
+    <div style="margin:1.5rem 0;">
+      <script async src="https://telegram.org/js/telegram-widget.js?22"
+              data-telegram-login="{{ bot_username }}"
+              data-size="large"
+              data-auth-url="{{ auth_url }}"
+              data-request-access="write"></script>
+    </div>
+
+    <p style="color:var(--text-tertiary);font-size:0.75rem;margin-top:1rem;">Вход через официальный сервис Telegram без передачи паролей</p>
+    <p style="margin-top:0.75rem;font-size:0.75rem;"><a href="{{ url_for('terms') }}" style="color:var(--text-secondary);">Условия использования</a> · <a href="{{ url_for('index') }}" style="color:var(--text-secondary);">На главную</a></p>
+  </div>
+
+  <!-- Info Column -->
+  <div class="flex-1 glass-elevated p-6 md:p-8 flex flex-col justify-between gap-6" style="font-size:0.875rem;">
+
+    <div>
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+        <span style="font-size:1.25rem;">✦</span>
+        <h3 style="color:var(--accent);">Возможности платформы</h3>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.625rem;">
+        <div class="rule-item" style="display:flex;align-items:flex-start;gap:0.5rem;">
+          <span style="color:var(--info);flex-shrink:0;">▸</span>
+          <span style="color:var(--text-secondary);">Парсинг целевых контактов из описаний YouTube</span>
+        </div>
+        <div class="rule-item" style="display:flex;align-items:flex-start;gap:0.5rem;">
+          <span style="color:var(--accent2);flex-shrink:0;">▸</span>
+          <span style="color:var(--text-secondary);">Проверка аккаунтов на валидность в Telegram</span>
+        </div>
+        <div class="rule-item" style="display:flex;align-items:flex-start;gap:0.5rem;">
+          <span style="color:var(--success);flex-shrink:0;">▸</span>
+          <span style="color:var(--text-secondary);">Автоматическая рассылка с поддержкой спинтакса</span>
+        </div>
+        <div class="rule-item" style="display:flex;align-items:flex-start;gap:0.5rem;">
+          <span style="color:var(--warning);flex-shrink:0;">▸</span>
+          <span style="color:var(--text-secondary);">Админ-панель: контроль сессий, логов и пользователей</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glow-divider"></div>
+
+    <div>
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+        <span style="font-size:1.25rem;">⚠</span>
+        <h3 style="color:var(--danger);">Правила и причины бана</h3>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;">
+        <div class="rule-item" style="display:flex;align-items:flex-start;gap:0.5rem;">
+          <span style="color:var(--text-tertiary);flex-shrink:0;">•</span>
+          <span style="color:var(--text-secondary);">Запрещен жесткий спам и рассылка фишинговых ссылок</span>
+        </div>
+        <div class="rule-item" style="display:flex;align-items:flex-start;gap:0.5rem;">
+          <span style="color:var(--text-tertiary);flex-shrink:0;">•</span>
+          <span style="color:var(--text-secondary);">Превышение суточных лимитов отправки — PeerFlood</span>
+        </div>
+        <div class="rule-item" style="display:flex;align-items:flex-start;gap:0.5rem;">
+          <span style="color:var(--text-tertiary);flex-shrink:0;">•</span>
+          <span style="color:var(--text-secondary);">Попытки взлома или обхода систем безопасности</span>
+        </div>
+        <div class="rule-item" style="display:flex;align-items:flex-start;gap:0.5rem;">
+          <span style="color:var(--text-tertiary);flex-shrink:0;">•</span>
+          <span style="color:var(--text-secondary);">Нарушение правил → перманентный блок аккаунта</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:auto;padding-top:1rem;text-align:center;">
+      <span class="badge badge-purple" style="font-weight:500;">Telegram OAuth 2.0</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- AI Chat Widget -->
+<button class="ai-fab" onclick="toggleAiChat()" id="ai-fab" data-tooltip="AI Помощник">💬</button>
+
+<div class="ai-chat-panel glass-elevated p-4 hidden" id="ai-chat-box" style="height:420px;display:none;flex-direction:column;">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:0.75rem;border-bottom:1px solid var(--border-default);margin-bottom:0.75rem;">
+    <span style="font-weight:600;color:var(--accent);font-size:0.875rem;">🤖 ИИ-Помощник</span>
+    <button onclick="toggleAiChat()" class="btn btn-ghost btn-xs" style="border-radius:var(--radius-full);">✕</button>
+  </div>
+  <div id="ai-messages" style="flex:1;overflow-y:auto;padding-right:0.25rem;display:flex;flex-direction:column;gap:0.5rem;">
+    <div style="background:var(--bg-input);padding:0.625rem 0.75rem;border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary);">
+      Привет! Задайте вопрос по работе сайта или правилам.
+    </div>
+  </div>
+  <div style="display:flex;gap:0.5rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border-default);">
+    <input id="ai-input" type="text" placeholder="Спросите о чем-нибудь..."
+           class="glass-input" style="flex:1;"
+           onkeypress="if(event.key==='Enter')sendAiQuery()">
+    <button onclick="sendAiQuery()" class="btn btn-primary btn-sm">Спросить</button>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleAiChat(){
+  var box = document.getElementById('ai-chat-box');
+  var fab = document.getElementById('ai-fab');
+  if (box.style.display === 'none' || box.classList.contains('hidden')) {
+    box.style.display = 'flex';
+    box.classList.remove('hidden');
+    fab.style.display = 'none';
+  } else {
+    box.style.display = 'none';
+    box.classList.add('hidden');
+    fab.style.display = 'flex';
+  }
+}
+
+function sendAiQuery(){
+  var input = document.getElementById('ai-input');
+  var q = input.value.trim();
+  if (!q) return;
+  var msgs = document.getElementById('ai-messages');
+  msgs.innerHTML += '<div style="background:rgba(99,102,241,0.1);padding:0.625rem 0.75rem;border-radius:var(--radius-sm);font-size:0.8125rem;text-align:right;color:var(--text-primary);">Вы: ' + escapeHtml(q) + '</div>';
+  input.value = '';
+
+  fetch('/api/ai/ask', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': (document.querySelector('meta[name="csrf-token"]') || {}).content || ''
+    },
+    body: JSON.stringify({question: q})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    msgs.innerHTML += '<div style="background:var(--bg-input);padding:0.625rem 0.75rem;border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary);">ИИ: ' + escapeHtml(d.answer) + '</div>';
+    msgs.scrollTop = msgs.scrollHeight;
+  });
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+{% endblock %}

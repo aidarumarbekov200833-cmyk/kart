@@ -1,0 +1,12 @@
+# Переменные окружения и секреты
+.env
+
+# Кэш Python
+__pycache__/
+*.pyc
+
+# Базы данных и логи
+data/autoflow.db
+*.db
+data/logs/
+*.log

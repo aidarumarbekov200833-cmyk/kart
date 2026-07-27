@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}AutoFlow — Автоматизация лидогенерации в Telegram{% endblock %}
+{% block body_class %}min-h-screen{% endblock %}
+{% block head_extra %}
+<style>
+  .hero-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 20%, var(--accent-soft) 0%, transparent 45%),
+                radial-gradient(circle at 75% 60%, var(--accent2-glow) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .lp-nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .feature-card { height: 100%; }
+  .feature-icon {
+    width: 44px; height: 44px; border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.35rem; margin-bottom: 0.875rem;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .step-num {
+    width: 32px; height: 32px; border-radius: var(--radius-full);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.9rem; flex-shrink: 0;
+    background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;
+  }
+  .faq-item { cursor: pointer; }
+  .faq-item summary { list-style: none; font-weight: 600; padding: 0.25rem 0; }
+  .faq-item summary::-webkit-details-marker { display: none; }
+</style>
+{% endblock %}
+{% block content %}
+<nav class="lp-nav">
+  <div class="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
+    <span class="logo-gradient" style="font-size:1.25rem;font-weight:800;letter-spacing:-0.03em;">AutoFlow</span>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <a href="#features" class="btn btn-ghost btn-sm" style="display:none;">Возможности</a>
+      <button id="theme-toggle-btn" class="theme-toggle" data-tooltip="Сменить тему" aria-label="Сменить тему">🎨</button>
+      <div id="theme-dropdown" class="theme-dropdown glass-elevated p-1 hidden"></div>
+      <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm">Войти</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero-glow" style="position:relative;overflow:hidden;">
+  <div class="max-w-4xl mx-auto text-center px-4 py-16 md:py-24 page-enter" style="position:relative;z-index:1;">
+    <span class="badge badge-purple" style="margin-bottom:1.25rem;">⚡ Автоматизация лидогенерации</span>
+    <h1 style="font-size:clamp(2rem,5vw,3.25rem);font-weight:800;letter-spacing:-0.03em;line-height:1.1;">
+      Собирайте лиды из <span class="logo-gradient">YouTube</span><br>и общайтесь в <span class="logo-gradient">Telegram</span>
+    </h1>
+    <p style="color:var(--text-secondary);font-size:1.05rem;max-width:38rem;margin:1.25rem auto 0;line-height:1.6;">
+      AutoFlow находит целевые контакты в описаниях видео, проверяет их в Telegram и автоматизирует рассылку — безопасно и в рамках лимитов.
+    </p>
+    <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:2rem;flex-wrap:wrap;">
+      <a href="{{ url_for('login') }}" class="btn btn-primary">Войти через Telegram</a>
+      <a href="#how" class="btn btn-ghost">Как это работает</a>
+    </div>
+  </div>
+</header>
+
+<!-- Features -->
+<section id="features" class="max-w-6xl mx-auto px-4 py-12">
+  <h2 style="text-align:center;margin-bottom:0.5rem;">Возможности платформы</h2>
+  <p style="text-align:center;color:var(--text-tertiary);margin-bottom:2rem;font-size:0.9rem;">Всё необходимое для лидогенерации в одном месте</p>
+  <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
+    <div class="glass feature-card p-5">
+      <div class="feature-icon">🔍</div>
+      <h3>Парсинг YouTube</h3>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Находит контакты в описаниях видео по вашим ключевым словам.</p>
+    </div>
+    <div class="glass feature-card p-5">
+      <div class="feature-icon">✅</div>
+      <h3>Верификация Telegram</h3>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Проверяет аккаунты на валидность перед рассылкой.</p>
+    </div>
+    <div class="glass feature-card p-5">
+      <div class="feature-icon">🚀</div>
+      <h3>Авторассылка</h3>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Отправка сообщений с поддержкой спинтакса и безопасных задержек.</p>
+    </div>
+    <div class="glass feature-card p-5">
+      <div class="feature-icon">📊</div>
+      <h3>Аналитика и логи</h3>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Статистика лидов, история активности и контроль сессий.</p>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how" class="max-w-4xl mx-auto px-4 py-12">
+  <h2 style="text-align:center;margin-bottom:2rem;">Как это работает</h2>
+  <div class="glass-elevated p-6" style="display:flex;flex-direction:column;gap:1.25rem;">
+    <div style="display:flex;gap:1rem;align-items:flex-start;">
+      <span class="step-num">1</span>
+      <div><h3>Войдите через Telegram</h3><p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.25rem;">Безопасная авторизация без передачи паролей.</p></div>
+    </div>
+    <div style="display:flex;gap:1rem;align-items:flex-start;">
+      <span class="step-num">2</span>
+      <div><h3>Запустите парсинг</h3><p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.25rem;">Укажите ключевые слова — система соберёт целевые контакты.</p></div>
+    </div>
+    <div style="display:flex;gap:1rem;align-items:flex-start;">
+      <span class="step-num">3</span>
+      <div><h3>Проверьте и разошлите</h3><p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.25rem;">Верифицируйте лиды и запустите рассылку в рамках лимитов.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="max-w-3xl mx-auto px-4 py-12">
+  <h2 style="text-align:center;margin-bottom:2rem;">Частые вопросы</h2>
+  <div style="display:flex;flex-direction:column;gap:0.75rem;">
+    <details class="glass faq-item p-4">
+      <summary>Нужно ли передавать пароль от Telegram?</summary>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Нет. Вход выполняется через официальный Telegram Login без передачи паролей.</p>
+    </details>
+    <details class="glass faq-item p-4">
+      <summary>Могу ли я получить бан?</summary>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Бан возможен при спаме, превышении лимитов (PeerFlood) и нарушении правил. Подробнее — в <a href="{{ url_for('terms') }}" style="color:var(--accent);">Условиях использования</a>.</p>
+    </details>
+    <details class="glass faq-item p-4">
+      <summary>Откуда берутся лиды?</summary>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Из открытых описаний видео на YouTube по указанным вами ключевым словам.</p>
+    </details>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="max-w-3xl mx-auto px-4 py-12">
+  <div class="glass-elevated p-8 text-center">
+    <h2 style="margin-bottom:0.5rem;">Готовы начать?</h2>
+    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Войдите через Telegram и запустите первый парсинг за минуту.</p>
+    <a href="{{ url_for('login') }}" class="btn btn-primary">Войти через Telegram</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="border-top:1px solid var(--border-subtle);margin-top:2rem;">
+  <div class="max-w-6xl mx-auto px-4 py-6" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;align-items:center;">
+    <span class="logo-gradient" style="font-weight:800;">AutoFlow</span>
+    <div style="display:flex;gap:1.25rem;font-size:0.8125rem;">
+      <a href="{{ url_for('terms') }}" style="color:var(--text-secondary);">Условия использования</a>
+      <a href="{{ url_for('login') }}" style="color:var(--text-secondary);">Вход</a>
+      <a href="https://t.me/{{ admin_username }}" style="color:var(--text-secondary);">Поддержка</a>
+    </div>
+    <span style="color:var(--text-tertiary);font-size:0.75rem;">© AutoFlow</span>
+  </div>
+</footer>
+{% endblock %}

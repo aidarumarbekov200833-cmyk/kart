@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Условия использования — AutoFlow{% endblock %}
+{% block body_class %}min-h-screen{% endblock %}
+{% block content %}
+<nav class="lp-nav" style="position:sticky;top:0;z-index:50;backdrop-filter:blur(var(--glass-blur));border-bottom:1px solid var(--border-subtle);">
+  <div class="max-w-4xl mx-auto flex items-center justify-between px-4 py-3">
+    <a href="{{ url_for('index') }}" class="logo-gradient" style="font-size:1.25rem;font-weight:800;letter-spacing:-0.03em;text-decoration:none;">AutoFlow</a>
+    <a href="{{ url_for('index') }}" class="btn btn-ghost btn-sm">← На главную</a>
+  </div>
+</nav>
+
+<main class="max-w-3xl mx-auto px-4 py-10 page-enter">
+  <h1 style="margin-bottom:0.5rem;">Условия использования</h1>
+  <p style="color:var(--text-tertiary);font-size:0.875rem;margin-bottom:2rem;">Пожалуйста, внимательно ознакомьтесь с правилами платформы перед началом работы.</p>
+
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+    {% for section in rules %}
+    <section class="glass p-5">
+      <h2 style="margin-bottom:0.75rem;color:var(--accent);">{{ section.title }}</h2>
+      <ul style="display:flex;flex-direction:column;gap:0.5rem;list-style:none;">
+        {% for item in section['items'] %}
+        <li style="display:flex;align-items:flex-start;gap:0.5rem;color:var(--text-secondary);font-size:0.9rem;">
+          <span style="color:var(--accent);flex-shrink:0;">▸</span><span>{{ item }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </div>
+
+  <div class="glass-elevated p-5" style="margin-top:1.5rem;text-align:center;">
+    <p style="color:var(--text-secondary);font-size:0.9rem;">Остались вопросы? Напишите администратору:
+      <a href="https://t.me/{{ admin_username }}" style="color:var(--accent);font-weight:600;">@{{ admin_username }}</a>
+    </p>
+  </div>
+
+  <p style="text-align:center;color:var(--text-tertiary);font-size:0.75rem;margin-top:1.5rem;">
+    Используя сервис, вы подтверждаете согласие с данными условиями.
+  </p>
+</main>
+{% endblock %}

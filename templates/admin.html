@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+{% block title %}AutoFlow — Админка{% endblock %}
+{% block body_class %}min-h-screen{% endblock %}
+{% block head_extra %}
+<style>
+  @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr !important; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-enter max-w-7xl mx-auto px-4 py-6 lg:py-8">
+
+  <!-- Header -->
+  <header style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <h1 style="font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;color:var(--danger);">Admin Panel</h1>
+      <span class="badge badge-red">root</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <div style="position:relative;">
+        <button class="theme-toggle" id="theme-toggle-btn" data-tooltip="Сменить тему">🎨</button>
+        <div id="theme-dropdown" class="theme-dropdown glass-elevated p-1 hidden"></div>
+      </div>
+      <a href="/dashboard" class="btn btn-ghost btn-sm">← Дашборд</a>
+      <a href="/logout" class="btn btn-ghost btn-sm" style="color:var(--danger);">Выйти</a>
+    </div>
+  </header>
+
+  <!-- Notifications Panel -->
+  <div class="glass p-5 mb-5">
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+      <span style="font-size:1.25rem;">📢</span>
+      <h3>Отправить системное уведомление</h3>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:0.75rem;margin-bottom:0.75rem;">
+      <div>
+        <label style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-bottom:0.25rem;">Получатель</label>
+        <select id="notif-target" class="glass-input" style="font-size:0.8125rem;">
+          <option value="all">Всем пользователям</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-bottom:0.25rem;">Заголовок</label>
+        <input id="notif-title" type="text" class="glass-input" placeholder="Важное обновление системы">
+      </div>
+    </div>
+    <textarea id="notif-message" class="glass-input glass-textarea" rows="2" placeholder="Текст уведомления..." style="margin-bottom:0.75rem;"></textarea>
+    <button onclick="sendAdminNotification()" class="btn btn-primary btn-sm">📨 Отправить уведомление</button>
+  </div>
+
+  <!-- Whitelist + Security row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;" class="admin-grid">
+    <!-- Whitelist -->
+    <div class="glass p-5">
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+        <span style="font-size:1.25rem;">🔐</span>
+        <h3>Белый список доступа</h3>
+        <span class="badge badge-green" style="margin-left:auto;" data-tooltip="Войти могут только аккаунты из списка">whitelist</span>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-tertiary);margin-bottom:0.75rem;">💡 Добавьте Telegram ID (надёжнее) или username. Удаление мгновенно отзывает доступ.</p>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+        <input id="wl-id" type="text" class="glass-input" placeholder="Telegram ID (цифры)" style="flex:1;min-width:120px;">
+        <input id="wl-username" type="text" class="glass-input" placeholder="username" style="flex:1;min-width:120px;">
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <input id="wl-note" type="text" class="glass-input" placeholder="Заметка (необяз.)" style="flex:1;">
+        <button onclick="addWhitelist()" class="btn btn-primary btn-sm">Добавить</button>
+      </div>
+      <div id="wl-list" style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.375rem;max-height:220px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- Security events -->
+    <div class="glass p-5">
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+        <span style="font-size:1.25rem;">🚨</span>
+        <h3>События безопасности</h3>
+        <button onclick="loadSecurityEvents()" style="margin-left:auto;background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.75rem;">↻ Обновить</button>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-tertiary);margin-bottom:0.75rem;">💡 Отклонённые входы, попытки в админку, изменения whitelist.</p>
+      <div id="sec-events" style="display:flex;flex-direction:column;gap:0.25rem;max-height:260px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="glass p-5" style="overflow-x:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="font-size:1.25rem;">👥</span>
+        <h3>Управление пользователями</h3>
+      </div>
+      <span style="font-size:0.75rem;color:var(--text-tertiary);" id="user-count"></span>
+    </div>
+    <table class="glass-table">
+      <thead>
+        <tr>
+          <th>Telegram</th>
+          <th>Тариф</th>
+          <th>TG-акк</th>
+          <th>Лидов</th>
+          <th>Отпр.</th>
+          <th data-tooltip="Уникальные IP / устройства — много = возможная передача аккаунта" style="cursor:help;">IP / Устр.</th>
+          <th>Риск</th>
+          <th>Активность</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="users-table">
+        <tr>
+          <td colspan="9" style="text-align:center;padding:2rem 0;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+              <div class="skeleton" style="width:200px;height:16px;"></div>
+              <div class="skeleton" style="width:120px;height:14px;"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- User Detail Modal -->
+  <div id="modal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="glass-elevated modal-content" style="max-width:720px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h2 id="modal-title" style="font-size:1.25rem;font-weight:700;">Пользователь</h2>
+        <button onclick="document.getElementById('modal').classList.add('hidden')" class="btn btn-ghost btn-xs" style="border-radius:var(--radius-full);">✕</button>
+      </div>
+
+      <h4 style="font-size:0.8125rem;color:var(--accent);margin-bottom:0.5rem;">🛡 Безопасность и доступ</h4>
+      <div id="m-sec" style="margin-bottom:1rem;"></div>
+
+      <h4 style="font-size:0.8125rem;color:var(--accent);margin-bottom:0.5rem;">💰 Офферы (тексты рассылок)</h4>
+      <div id="m-offers" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.5rem;"></div>
+
+      <h4 style="font-size:0.8125rem;color:var(--accent);margin-bottom:0.5rem;">📱 Telegram-аккаунты</h4>
+      <div id="m-tg" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.375rem;"></div>
+
+      <h4 style="font-size:0.8125rem;color:var(--accent);margin-bottom:0.5rem;">💻 Сессии</h4>
+      <div id="m-sess" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.375rem;"></div>
+
+      <h4 style="font-size:0.8125rem;color:var(--accent);margin-bottom:0.5rem;">📋 Действия</h4>
+      <div id="m-act" style="margin-bottom:1rem;background:var(--bg-input);padding:0.75rem;border-radius:var(--radius-sm);max-height:240px;overflow-y:auto;"></div>
+
+      <h4 style="font-size:0.8125rem;color:var(--accent);margin-bottom:0.5rem;">✉️ Отправленные сообщения</h4>
+      <div id="m-msg" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+var allUsersData = [];
+
+function userName(u){
+  return u.tg_username ? '@' + u.tg_username : (u.tg_first_name || ('id' + u.tg_id));
+}
+
+function loadUsers(){
+  AutoFlow.api('/admin/api/users').then(function(us){
+    allUsersData = us;
+    var sel = document.getElementById('notif-target');
+    var html = '<option value="all">Всем пользователям</option>';
+    us.forEach(function(u){
+      html += '<option value="' + u.id + '">' + userName(u) + ' (ID: ' + u.id + ')</option>';
+    });
+    sel.innerHTML = html;
+
+    document.getElementById('user-count').textContent = 'Всего: ' + us.length;
+
+    document.getElementById('users-table').innerHTML = us.map(function(u){
+      var blk = u.is_blocked;
+      var ipc = (u.ip_count == null ? '?' : u.ip_count);
+      var devc = (u.device_count == null ? '?' : u.device_count);
+      var riskBadge = riskBadgeFor(u.ip_count, u.device_count);
+      return '<tr class="' + (blk ? 'opacity-50' : '') + '">' +
+        '<td>' + userName(u) + (u.role === 'admin' ? ' <span class="badge badge-red">admin</span>' : '') + '</td>' +
+        '<td><span class="badge badge-purple">' + (u.tier || 'free') + '</span></td>' +
+        '<td>' + u.tg_count + '</td>' +
+        '<td>' + u.leads_count + '</td>' +
+        '<td>' + u.sent_count + '</td>' +
+        '<td style="font-size:0.8125rem;">🌐 ' + ipc + ' / 💻 ' + devc + '</td>' +
+        '<td>' + riskBadge + '</td>' +
+        '<td style="font-size:0.75rem;color:var(--text-tertiary);">' + (u.last_activity ? new Date(u.last_activity).toLocaleString('ru-RU') : '—') + '</td>' +
+        '<td><div style="display:flex;gap:0.375rem;">' +
+          '<button onclick="showDetails(' + u.id + ')" class="btn btn-primary btn-xs">Детали</button>' +
+          '<button onclick="toggleBlock(' + u.id + ',' + (blk ? 0 : 1) + ')" class="' + (blk ? 'btn-success' : 'btn-danger') + ' btn btn-xs">' + (blk ? 'Разблок' : 'Блок') + '</button>' +
+        '</div></td>' +
+        '</tr>';
+    }).join('');
+  });
+}
+
+function riskBadgeFor(ipCount, devCount){
+  ipCount = ipCount || 0; devCount = devCount || 0;
+  if (devCount >= 4 || ipCount >= 8) return '<span class="badge badge-red" data-tooltip="Много IP/устройств — вероятна передача аккаунта">⚠ высокий</span>';
+  if (devCount >= 3 || ipCount >= 5) return '<span class="badge badge-yellow">• средний</span>';
+  return '<span class="badge badge-green">✓ низкий</span>';
+}
+
+function sendAdminNotification(){
+  var target = document.getElementById('notif-target').value;
+  var title = document.getElementById('notif-title').value.trim();
+  var message = document.getElementById('notif-message').value.trim();
+  if (!title || !message) { AutoFlow.toast.warning('Заполните заголовок и текст'); return; }
+
+  AutoFlow.api('/admin/api/notifications/send', {
+    method: 'POST',
+    body: JSON.stringify({target: target, title: title, message: message})
+  }).then(function(d){
+    AutoFlow.toast.success(d.message || 'Уведомление отправлено');
+    document.getElementById('notif-title').value = '';
+    document.getElementById('notif-message').value = '';
+  }).catch(function(e){ AutoFlow.toast.error(e.message); });
+}
+
+function showDetails(id){
+  AutoFlow.api('/admin/api/users/' + id).then(function(d){
+    document.getElementById('modal-title').textContent = userName(d.user);
+
+    // --- Security & access ---
+    var sec = d.security || {};
+    var riskColor = sec.risk === 'high' ? 'var(--danger)' : (sec.risk === 'medium' ? 'var(--warning)' : 'var(--success)');
+    var riskLabel = sec.risk === 'high' ? 'ВЫСОКИЙ' : (sec.risk === 'medium' ? 'СРЕДНИЙ' : 'НИЗКИЙ');
+    var ipsHtml = (sec.ips || []).map(function(x){
+      return '<div style="display:flex;justify-content:space-between;font-size:0.75rem;padding:0.125rem 0;"><span style="font-family:var(--font-mono);">' + escapeH(x.ip) + '</span><span style="color:var(--text-tertiary);">' + x.hits + '× · ' + fmt(x.last_seen) + '</span></div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.75rem;">Нет данных</span>';
+    var devHtml = (sec.devices || []).map(function(x){
+      return '<div style="display:flex;justify-content:space-between;font-size:0.75rem;padding:0.125rem 0;"><span style="font-family:var(--font-mono);">' + escapeH((x.fp||'').substring(0,12)) + '</span><span style="color:var(--text-tertiary);">' + x.hits + '×</span></div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.75rem;">Нет данных</span>';
+    var uaHtml = (sec.user_agents || []).map(function(x){
+      return '<div style="font-size:0.6875rem;color:var(--text-secondary);padding:0.125rem 0;word-break:break-all;">' + escapeH((x.ua||'').substring(0,90)) + ' <span style="color:var(--text-tertiary);">(' + x.hits + '×)</span></div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.75rem;">Нет данных</span>';
+    var reasons = (sec.risk_reasons && sec.risk_reasons.length) ? '<div style="font-size:0.6875rem;color:var(--text-tertiary);margin-top:0.25rem;">Сигналы: ' + sec.risk_reasons.map(escapeH).join(', ') + '</div>' : '';
+
+    document.getElementById('m-sec').innerHTML =
+      '<div class="glass" style="padding:0.75rem;">' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.5rem;">' +
+          '<span style="font-weight:700;color:' + riskColor + ';">Риск передачи: ' + riskLabel + '</span>' +
+          '<span class="badge badge-blue">🌐 ' + (sec.ip_count||0) + ' IP</span>' +
+          '<span class="badge badge-purple">💻 ' + (sec.device_count||0) + ' устр.</span>' +
+          '<span class="badge badge-yellow">🌐 ' + (sec.ua_count||0) + ' брауз.</span>' +
+        '</div>' + reasons +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.5rem;">' +
+          '<div><div style="font-size:0.6875rem;color:var(--text-tertiary);text-transform:uppercase;margin-bottom:0.25rem;">IP-адреса</div>' + ipsHtml + '</div>' +
+          '<div><div style="font-size:0.6875rem;color:var(--text-tertiary);text-transform:uppercase;margin-bottom:0.25rem;">Устройства</div>' + devHtml + '</div>' +
+        '</div>' +
+        '<div style="margin-top:0.5rem;"><div style="font-size:0.6875rem;color:var(--text-tertiary);text-transform:uppercase;margin-bottom:0.25rem;">Браузеры / Устройства (User-Agent)</div>' + uaHtml + '</div>' +
+      '</div>';
+
+    // --- Offers ---
+    var offers = (d.offers && d.offers.offers) || [];
+    var totals = (d.offers && d.offers.totals) || {};
+    var totalsHtml = '<div style="font-size:0.75rem;color:var(--text-tertiary);margin-bottom:0.375rem;">Всего сообщений: ' + (totals.total_msgs||0) + ' · доставлено: ' + (totals.sent_ok||0) + ' · PeerFlood: ' + (totals.peer_flood||0) + ' · ошибки: ' + (totals.errors||0) + '</div>';
+    document.getElementById('m-offers').innerHTML = totalsHtml + (offers.map(function(o){
+      return '<div class="glass" style="padding:0.625rem 0.75rem;font-size:0.8125rem;">' +
+        '<div style="color:var(--text-primary);">' + escapeH((o.text||'').substring(0,200)) + '</div>' +
+        '<div style="color:var(--text-tertiary);font-size:0.6875rem;margin-top:0.25rem;">Отправлено ' + o.times + '× · успешно ' + (o.sent_ok||0) + ' · последний раз ' + fmt(o.last_used) + '</div>' +
+        '</div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.8125rem;">Нет офферов</span>');
+
+    document.getElementById('m-tg').innerHTML = d.tg_accounts.map(function(a){
+      return '<div class="glass" style="padding:0.5rem 0.75rem;font-size:0.8125rem;">📱 ' + a.phone + (a.is_active ? ' <span style="color:var(--success);">✅</span>' : ' <span style="color:var(--danger);">❌</span>') + '</div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.8125rem;">Нет аккаунтов</span>';
+
+    document.getElementById('m-sess').innerHTML = d.sessions.map(function(s){
+      return '<div class="glass" style="padding:0.5rem 0.75rem;font-size:0.75rem;">IP: ' + escapeH(s.ip_address||'') + ' | ' + escapeH((s.device_fingerprint || '').substring(0,8)) + ' | ' + fmt(s.last_active) + '</div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.8125rem;">Нет сессий</span>';
+
+    document.getElementById('m-act').innerHTML = d.activities.map(function(a){
+      return '<div style="color:var(--text-secondary);font-size:0.75rem;font-family:var(--font-mono);padding:0.125rem 0;">[' + fmt(a.created_at) + '] ' + escapeH(a.action) + ' <span style="color:var(--text-tertiary);">' + escapeH(a.ip_address || '') + '</span></div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.8125rem;">Нет записей</span>';
+
+    document.getElementById('m-msg').innerHTML = d.messages.map(function(m){
+      return '<div class="glass" style="padding:0.625rem 0.75rem;font-size:0.8125rem;">' +
+        '<div style="color:var(--accent);">→ ' + escapeH(m.recipient_username||'') + '</div>' +
+        '<div style="color:var(--text-secondary);margin-top:0.25rem;">' + escapeH((m.message_text || '').substring(0, 100)) + '</div>' +
+        '<div style="color:var(--text-tertiary);font-size:0.6875rem;margin-top:0.25rem;">' + escapeH(m.status||'') + ' • ' + fmt(m.created_at) + '</div>' +
+        '</div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.8125rem;">Нет сообщений</span>';
+
+    document.getElementById('modal').classList.remove('hidden');
+  });
+}
+
+function escapeH(str){ var d = document.createElement('div'); d.textContent = (str==null?'':str); return d.innerHTML; }
+function fmt(t){ if(!t) return '—'; var d = new Date(t.indexOf('T')===-1 ? t.replace(' ','T')+'Z' : t); return isNaN(d.getTime()) ? t : d.toLocaleString('ru-RU'); }
+
+function toggleBlock(id, blocked){
+  AutoFlow.api('/admin/api/users/' + id + '/block', {
+    method: 'POST',
+    body: JSON.stringify({blocked: !!blocked})
+  }).then(function(){
+    loadUsers();
+    AutoFlow.toast.info(blocked ? 'Пользователь заблокирован' : 'Пользователь разблокирован');
+  });
+}
+
+/* ---- Whitelist ---- */
+function loadWhitelist(){
+  AutoFlow.api('/admin/api/whitelist').then(function(items){
+    document.getElementById('wl-list').innerHTML = (items || []).map(function(w){
+      var who = (w.tg_id ? ('ID ' + w.tg_id) : '') + (w.tg_username ? ' @' + escapeH(w.tg_username) : '');
+      return '<div class="glass" style="padding:0.5rem 0.75rem;display:flex;justify-content:space-between;align-items:center;font-size:0.8125rem;">' +
+        '<span>🔑 ' + (who || '—') + (w.note ? ' <span style="color:var(--text-tertiary);">· ' + escapeH(w.note) + '</span>' : '') + '</span>' +
+        '<button onclick="delWhitelist(' + w.id + ')" class="btn btn-ghost btn-xs" style="color:var(--danger);">Удалить</button>' +
+        '</div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.8125rem;">Список пуст</span>';
+  });
+}
+
+function addWhitelist(){
+  var tg_id = document.getElementById('wl-id').value.trim();
+  var username = document.getElementById('wl-username').value.trim();
+  var note = document.getElementById('wl-note').value.trim();
+  if (!tg_id && !username) { AutoFlow.toast.warning('Укажите ID или username'); return; }
+  AutoFlow.api('/admin/api/whitelist', {
+    method: 'POST',
+    body: JSON.stringify({tg_id: tg_id, tg_username: username, note: note})
+  }).then(function(){
+    document.getElementById('wl-id').value = '';
+    document.getElementById('wl-username').value = '';
+    document.getElementById('wl-note').value = '';
+    loadWhitelist();
+    AutoFlow.toast.success('Добавлено в белый список');
+  }).catch(function(e){ AutoFlow.toast.error(e.message); });
+}
+
+function delWhitelist(id){
+  AutoFlow.api('/admin/api/whitelist/' + id, { method: 'DELETE' })
+    .then(function(){ loadWhitelist(); AutoFlow.toast.info('Удалено из белого списка'); })
+    .catch(function(e){ AutoFlow.toast.error(e.message); });
+}
+
+/* ---- Security events ---- */
+function secEventStyle(type){
+  if (type.indexOf('denied') !== -1 || type.indexOf('not_whitelisted') !== -1 || type.indexOf('blocked') !== -1) return 'var(--danger)';
+  if (type.indexOf('whitelist') !== -1) return 'var(--warning)';
+  if (type.indexOf('success') !== -1) return 'var(--success)';
+  return 'var(--text-tertiary)';
+}
+
+function loadSecurityEvents(){
+  AutoFlow.api('/admin/api/security-events').then(function(events){
+    document.getElementById('sec-events').innerHTML = (events || []).map(function(e){
+      var who = (e.tg_username ? '@' + escapeH(e.tg_username) : (e.tg_id ? 'ID ' + e.tg_id : '—'));
+      return '<div style="font-size:0.6875rem;font-family:var(--font-mono);padding:0.25rem 0;border-bottom:1px solid var(--border-subtle);">' +
+        '<span style="color:' + secEventStyle(e.event_type) + ';font-weight:700;">' + escapeH(e.event_type) + '</span> ' +
+        '<span style="color:var(--text-secondary);">' + who + '</span> ' +
+        '<span style="color:var(--text-tertiary);">' + escapeH(e.ip_address || '') + '</span>' +
+        (e.detail ? ' <span style="color:var(--text-tertiary);">· ' + escapeH(e.detail) + '</span>' : '') +
+        '<div style="color:var(--text-tertiary);">' + fmt(e.created_at) + '</div>' +
+        '</div>';
+    }).join('') || '<span style="color:var(--text-tertiary);font-size:0.8125rem;">Нет событий</span>';
+  });
+}
+
+loadUsers();
+loadWhitelist();
+loadSecurityEvents();
+setInterval(loadSecurityEvents, 20000);
+</script>
+{% endblock %}

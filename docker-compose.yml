@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/app/data
+    env_file: .env
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+  backup:
+    image: alpine
+    volumes:
+      - ./data:/data
+      - ./backups:/backups
+    command: sh -c "while true; do cp /data/autoflow.db /backups/autoflow_\$(date +%Y%m%d_%H%M%S).db 2>/dev/null; sleep 86400; done"
+    restart: unless-stopped
